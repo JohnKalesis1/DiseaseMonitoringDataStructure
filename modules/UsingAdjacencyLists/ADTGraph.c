@@ -157,21 +157,22 @@ int compare_distances(Pointer a,Pointer b)  {
 }
 List graph_shortest_path(Graph graph, Pointer source, Pointer target)  {
     Map spider_web=map_create(graph->compare,NULL,free);
+    Map pqueue_vertex_relate=map_create(graph->compare,NULL,NULL);
     PriorityQueue distance_array=pqueue_create(compare_distances,free,NULL);
     Map previous_shortest=map_create(graph->compare,NULL,NULL);
     MapNode mnode=map_first(graph->map);
     for (int i=0;i<graph->size;i++)  {
         map_insert(spider_web,map_node_value(graph->map,mnode),create_bool(0));
-        map_insert(distance_array,map_node_value(graph->map,mnode),create_int(INT_MAX));
+        //map_insert(distance_array,map_node_value(graph->map,mnode),create_int(INT_MAX));
         mnode=map_next(graph->map,mnode);
     }
     map_insert(previous_shortest,source,NULL);
-    List list=map_node_value(graph->map,map_find_node(graph->map,source));
+    /*List list=map_node_value(graph->map,map_find_node(graph->map,source));
     ListNode lnode=list_first(list);
     while (lnode!=LIST_EOF)  {
         pqueue_insert(distance_array,create_distance(((W_Vertex)list_node_value(list,lnode))->vertex,((W_Vertex)list_node_value(list,lnode))->weight));
         lnode=list_next(list,lnode);
-    }
+    }*/
     map_insert(spider_web,source,create_bool(1));
     pqueue_insert(distance_array,create_distance(source,0));
     while(pqueue_size(distance_array)!=0)  {
@@ -200,9 +201,18 @@ List graph_shortest_path(Graph graph, Pointer source, Pointer target)  {
                 continue ;
             }
             uint alt_route=d_vertex->distance+((W_Vertex)list_node_value(list,lnode))->weight;
-            if (alt_route<pqueue_node_value(pqueue,((W_Vertex) list_node_value(list,lnode))->vertex))  {
-                
+            PriorityQueueNode qnode=map_node_value(pqueue_vertex_relate,map_find_node(pqueue_vertex_relate,((W_Vertex) list_node_value(list,lnode))->vertex));
+            if (map_find_node(pqueue_vertex_relate,((W_Vertex) list_node_value(list,lnode))->vertex)!=MAP_EOF)  {
+                if (alt_route<*(int*)pqueue_node_value(distance_array,qnode))  {
+                    *(int*)pqueue_node_value(distance_array,qnode)=alt_route;
+                    pqueue_update_order(distance_array,qnode);
+                    map_insert(previous_shortest,((W_Vertex)list_node_value(list,lnode))->vertex,d_vertex->vertex);
+                }
             }
+            else  {
+                pqueue_insert(distance_array,create_distance(((W_Vertex)list_node_value(list,lnode))->vertex,((W_Vertex)list_node_value(list,lnode))->weight));
+            }
+            lnode=list_next(list,lnode);   
         }
     }
 
