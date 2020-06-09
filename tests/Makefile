@@ -7,7 +7,7 @@ UsingHashTable_ADTMap_test_OBJS	= ADTMap_test.o $(MODULES)/UsingHashTable/ADTMap
 
 # ADTGraph
 #
- UsingAdjacencyLists_ADTGraph_test_OBJS = ADTGraph_test.o $(MODULES)/UsingHashTable/ADTMap.o $(MODULES)/ADTPriorityQueue.o $(MODULES)/ADTVector.o
+ UsingAdjacencyLists_ADTGraph_test_OBJS = ADTGraph_test.o $(MODULES)/UsingAdjacencyLists/ADTGraph.o $(MODULES)/UsingHashTable/ADTMap.o $(MODULES)/ADTPriorityQueue.o $(MODULES)/ADTVector.o $(MODULES)/UsingLinkedList/ADTList.o
 
 # DiseaseMonitor
 #

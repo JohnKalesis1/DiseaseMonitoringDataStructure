@@ -4,7 +4,7 @@
 		"dir": "tests",
 
 		// Όνομα του εκτελέσιμου προγράμματος
-		"program": "UsingHashTable_ADTMap_test",
+		"program": "UsingAdjacencyLists_ADTGraph_test",
 
 		// Ορίσματα του προγράμματος.
 		// - Για ανακατεύθυνση εισόδου βάζουμε ορίσματα: "<", "input-file"

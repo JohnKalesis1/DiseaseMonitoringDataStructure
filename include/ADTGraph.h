@@ -81,3 +81,6 @@ void graph_destroy(Graph graph);
 // Πρέπει να κληθεί μετά την graph_create και πριν από οποιαδήποτε άλλη συνάρτηση.
 
 void graph_set_hash_function(Graph graph, HashFunc hash_func);
+uint hash_string(Pointer value);		// Χρήση όταν το key είναι char*
+uint hash_int(Pointer value);			// Χρήση όταν το key είναι int*
+uint hash_pointer(Pointer value);
