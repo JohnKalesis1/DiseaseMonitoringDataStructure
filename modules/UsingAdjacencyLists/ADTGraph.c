@@ -255,7 +255,6 @@ List graph_shortest_path(Graph graph, Pointer source, Pointer target)  {
         }
         free(d_vertex);
     }
-    free(d_vertex);
     pqueue_set_destroy_value(distance_array,free);
     map_destroy(spider_web);
     map_destroy(previous_shortest);
