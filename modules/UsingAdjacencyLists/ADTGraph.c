@@ -260,7 +260,7 @@ List graph_shortest_path(Graph graph, Pointer source, Pointer target)  {
     map_destroy(previous_shortest);
     map_destroy(pqueue_vertex_relate);
     pqueue_destroy(distance_array);
-    return r_list;
+    return r_list; 
 }
 
 void graph_destroy(Graph graph)  {
