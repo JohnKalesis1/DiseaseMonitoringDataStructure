@@ -11,7 +11,7 @@
 
 int* create_integer(int value)  {
     int* p;
-    p=malloc(sizeof(int));
+    p=malloc(sizeof(*p));
     *p=value;
     return p;
 }
@@ -146,7 +146,91 @@ void test_remove(void)  {
 } 
 
 void test_shortest_path(void)  {
+	int N=10;											
+	Graph graph=graph_create(compare_ints,free);
+	graph_set_hash_function(graph,hash_int);
+	for(int i=0;i<N;i++)  {
+		graph_insert_vertex(graph,create_integer(i));
+	}
+	List path;
+	List list=graph_get_vertices(graph);
+	ListNode lnode=list_first(list);
+	
+	path=graph_shortest_path(graph,list_node_value(list,lnode),list_node_value(list,list_next(list,lnode)));
+	TEST_ASSERT(list_size(path)==0);
+	list_destroy(path);
 
+	graph_insert_edge(graph,list_node_value(list,lnode),list_node_value(list,list_next(list,lnode)),8);
+	path=graph_shortest_path(graph,list_node_value(list,lnode),list_node_value(list,list_next(list,lnode)));
+	TEST_ASSERT(list_size(path)==2);
+	ListNode path_node=list_first(path);
+	TEST_ASSERT(graph_get_weight(graph,list_node_value(path,path_node),list_node_value(path,list_next(path,path_node)))==8);
+	list_destroy(list);
+	list_destroy(path);
+	graph_destroy(graph);
+
+
+	graph=graph_create(compare_ints,free);
+	graph_set_hash_function(graph,hash_int);
+	for(int i=0;i<N;i++)  {
+		graph_insert_vertex(graph,create_integer(i));
+	}
+	list=graph_get_vertices(graph);
+	ListNode nd1=list_first(list),nd2=list_next(list,nd1),nd3=list_next(list,nd2),nd4=list_next(list,nd3),nd5=list_next(list,nd4),nd6=list_next(list,nd5),nd7=list_next(list,nd6);
+	graph_insert_edge(graph,list_node_value(list,nd1),list_node_value(list,nd2),2);
+	graph_insert_edge(graph,list_node_value(list,nd2),list_node_value(list,nd4),3);
+	graph_insert_edge(graph,list_node_value(list,nd7),list_node_value(list,nd4),10);
+	graph_insert_edge(graph,list_node_value(list,nd4),list_node_value(list,nd3),2);
+	graph_insert_edge(graph,list_node_value(list,nd3),list_node_value(list,nd5),5);
+	graph_insert_edge(graph,list_node_value(list,nd5),list_node_value(list,nd6),12);
+	graph_insert_edge(graph,list_node_value(list,nd6),list_node_value(list,nd7),6);
+	graph_insert_edge(graph,list_node_value(list,nd5),list_node_value(list,nd7),1);
+	graph_insert_edge(graph,list_node_value(list,nd1),list_node_value(list,nd4),4);
+	path=graph_shortest_path(graph,list_node_value(list,nd1),list_node_value(list,nd4));
+	TEST_ASSERT(list_size(path)==2);
+	list_destroy(path);
+	path=graph_shortest_path(graph,list_node_value(list,nd4),list_node_value(list,nd7));
+	TEST_ASSERT(list_size(path)==4);
+	list_destroy(path);
+	path=graph_shortest_path(graph,list_node_value(list,nd1),list_node_value(list,nd5));
+	TEST_ASSERT(list_size(path)==4);
+	list_destroy(path);
+	path=graph_shortest_path(graph,list_node_value(list,nd4),list_node_value(list,nd6));
+	TEST_ASSERT(list_size(path)==5);
+	list_destroy(path);
+	list_destroy(list);
+	graph_destroy(graph);
+	
+
+
+	graph=graph_create(compare_ints,free);
+	graph_set_hash_function(graph,hash_int);
+	for(int i=0;i<N;i++)  {
+		graph_insert_vertex(graph,create_integer(i));
+	}
+	list=graph_get_vertices(graph);
+	nd1=list_first(list),nd2=list_next(list,nd1),nd3=list_next(list,nd2),nd4=list_next(list,nd3);
+	graph_insert_edge(graph,list_node_value(list,nd1),list_node_value(list,nd2),2);
+	graph_insert_edge(graph,list_node_value(list,nd1),list_node_value(list,nd4),1);
+	graph_insert_edge(graph,list_node_value(list,nd4),list_node_value(list,nd3),7);
+	graph_insert_edge(graph,list_node_value(list,nd3),list_node_value(list,nd2),5);
+	path=graph_shortest_path(graph,list_node_value(list,nd1),list_node_value(list,nd3));
+	TEST_ASSERT(list_size(path)==3);
+	path_node=list_first(path);
+	TEST_ASSERT(graph_get_weight(graph,list_node_value(path,path_node),list_node_value(path,list_next(path,path_node)))+graph_get_weight(graph,list_node_value(path,list_next(list,list_next(list,path_node))),list_node_value(path,list_next(path,path_node)))==7);
+
+	graph_destroy(graph);
+	list_destroy(path);
+	list_destroy(list);
+	/*path=graph_shortest_path(graph,list_node_value(list,nd),list_node_value(list,nd);
+	TEST_ASSERT(list_size(path)==);
+	list_destroy(path);
+	path=graph_shortest_path(graph,list_node_value(list,nd),list_node_value(list,nd);
+	TEST_ASSERT(list_size(path)==);
+	list_destroy(path);
+	path=graph_shortest_path(graph,list_node_value(list,nd),list_node_value(list,nd);
+	TEST_ASSERT(list_size(path)==);
+	list_destroy(path);*/
 } 
 
 

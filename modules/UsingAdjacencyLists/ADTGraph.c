@@ -10,6 +10,7 @@ struct graph {
     int size;
     CompareFunc compare;
     DestroyFunc destroy;
+    HashFunc hash_function;
 };
 struct weighted_vertex  {
     Pointer vertex;
@@ -163,13 +164,13 @@ List graph_get_adjacent(Graph graph, Pointer vertex)  {
 
 bool* create_bool(bool value)  {
     bool* p;
-    p=malloc(sizeof(bool));
+    p=malloc(sizeof(*p));
     *p=value;
     return p;
 }
 int* create_int(int value)  {
     int* p;
-    p=malloc(sizeof(int));
+    p=malloc(sizeof(*p));
     *p=value;
     return p;
 }
@@ -179,67 +180,87 @@ int compare_distances(Pointer a,Pointer b)  {
     D_Vertex vertex2= (D_Vertex) b;
     return (-1)*(vertex1->distance-vertex2->distance);
 }
+int compare_bool(Pointer a,Pointer b)  {
+    return (*(bool*)a-*(bool*)b);
+}
+int unimportant(Pointer a,Pointer b)  {
+    return 0;
+}
 List graph_shortest_path(Graph graph, Pointer source, Pointer target)  {
-    Map spider_web=map_create(graph->compare,NULL,free);
+    Map spider_web=map_create(compare_bool,NULL,free);
     Map pqueue_vertex_relate=map_create(graph->compare,NULL,NULL);
-    PriorityQueue distance_array=pqueue_create(compare_distances,free,NULL);
-    Map previous_shortest=map_create(graph->compare,NULL,NULL);
+    PriorityQueue distance_array=pqueue_create(compare_distances,NULL,NULL);
+    Map previous_shortest=map_create(unimportant,NULL,NULL);
+    map_set_hash_function(spider_web,graph->hash_function);
+    map_set_hash_function(pqueue_vertex_relate,graph->hash_function);
+    map_set_hash_function(previous_shortest,graph->hash_function);
     MapNode mnode=map_first(graph->map);
     List r_list=list_create(NULL);
     for (int i=0;i<graph->size;i++)  {
-        map_insert(spider_web,map_node_value(graph->map,mnode),create_bool(0));
+        map_insert(spider_web,map_node_key(graph->map,mnode),create_bool(0));
         mnode=map_next(graph->map,mnode);
     }
     map_insert(previous_shortest,source,NULL);
-    map_insert(spider_web,source,create_bool(1));
-    pqueue_insert(distance_array,create_distance(source,0));
+    //map_insert(spider_web,source,create_bool(1));
+    PriorityQueueNode qnode=pqueue_insert(distance_array,create_distance(source,0));
+    map_insert(pqueue_vertex_relate,source,qnode);
+    D_Vertex d_vertex;
     while(pqueue_size(distance_array)!=0)  {
-        D_Vertex d_vertex=pqueue_max(distance_array);
+        d_vertex=pqueue_max(distance_array);
         pqueue_remove_max(distance_array);
-        if (*(int*)map_node_value(spider_web,d_vertex->vertex)==1)  {
+        if (*(bool*)map_node_value(spider_web,map_find_node(spider_web,d_vertex->vertex))==true)  {
+            free(d_vertex);
             continue ;
         }
-        if (graph->compare(d_vertex,target)==0)  {
-            if (map_node_value(previous_shortest,map_find(previous_shortest,target))!=NULL)  {
+        if (graph->compare(d_vertex->vertex,target)==0)  {
+            if (map_node_value(previous_shortest,map_find_node(previous_shortest,target))!=NULL)  {
+                list_insert_next(r_list,LIST_BOF,target);
                 Pointer vertex=target;
-                while (vertex!=NULL)  {
-                    list_insert_next(r_list,LIST_BOF,map_node_value(previous_shortest,map_find_node(previous_shortest,vertex)));
-                    vertex=map_node_value(previous_shortest,map_find_node(previous_shortest,vertex));
+                while ((vertex=map_node_value(previous_shortest,map_find_node(previous_shortest,vertex)))!=NULL)  {
+                    list_insert_next(r_list,LIST_BOF,vertex);
                 }
-                map_destroy(spider_web);
-                map_destroy(previous_shortest);
-                map_destroy(pqueue_vertex_relate);
-                pqueue_destroy(distance_array);
-                return r_list; 
             }
+            free(d_vertex);
+            pqueue_set_destroy_value(distance_array,free);
             map_destroy(spider_web);
             map_destroy(previous_shortest);
             map_destroy(pqueue_vertex_relate);
             pqueue_destroy(distance_array);
             return r_list;
         }
-        map_insert(spider_web,d_vertex->vertex,create_bool(1));
+        map_insert(spider_web,d_vertex->vertex,create_int(1));
         List list=map_node_value(graph->map,map_find_node(graph->map,d_vertex->vertex));
         ListNode lnode=list_first(list);
         while (lnode!=LIST_EOF)  {
-            if (*(int*)map_node_value(spider_web,((W_Vertex)list_node_value(list,lnode))->vertex)==1)  {
+            if (*(bool*)map_node_value(spider_web,map_find_node(spider_web,((W_Vertex)list_node_value(list,lnode))->vertex))==1)  {
+                lnode=list_next(list,lnode);
                 continue ;
             }
             uint alt_route=d_vertex->distance+((W_Vertex)list_node_value(list,lnode))->weight;
-            PriorityQueueNode qnode=map_node_value(pqueue_vertex_relate,map_find_node(pqueue_vertex_relate,((W_Vertex) list_node_value(list,lnode))->vertex));
             if (map_find_node(pqueue_vertex_relate,((W_Vertex) list_node_value(list,lnode))->vertex)!=MAP_EOF)  {
-                if (alt_route<*(int*)pqueue_node_value(distance_array,qnode))  {
-                    *(int*)pqueue_node_value(distance_array,qnode)=alt_route;
+                qnode=map_node_value(pqueue_vertex_relate,map_find_node(pqueue_vertex_relate,((W_Vertex) list_node_value(list,lnode))->vertex));
+                uint d=((D_Vertex)pqueue_node_value(distance_array,qnode))->distance;
+                if (alt_route<d)  {
+                    ((D_Vertex)pqueue_node_value(distance_array,qnode))->distance=alt_route;
                     pqueue_update_order(distance_array,qnode);
                     map_insert(previous_shortest,((W_Vertex)list_node_value(list,lnode))->vertex,d_vertex->vertex);
                 }
             }
             else  {
-                pqueue_insert(distance_array,create_distance(((W_Vertex)list_node_value(list,lnode))->vertex,((W_Vertex)list_node_value(list,lnode))->weight));
+                qnode=pqueue_insert(distance_array,create_distance(((W_Vertex)list_node_value(list,lnode))->vertex,d_vertex->distance+((W_Vertex)list_node_value(list,lnode))->weight));
+                map_insert(pqueue_vertex_relate,((W_Vertex)list_node_value(list,lnode))->vertex,qnode);
+                map_insert(previous_shortest,((W_Vertex)list_node_value(list,lnode))->vertex,d_vertex->vertex);
             }
             lnode=list_next(list,lnode);   
         }
+        free(d_vertex);
     }
+    free(d_vertex);
+    pqueue_set_destroy_value(distance_array,free);
+    map_destroy(spider_web);
+    map_destroy(previous_shortest);
+    map_destroy(pqueue_vertex_relate);
+    pqueue_destroy(distance_array);
     return r_list;
 }
 
@@ -250,4 +271,5 @@ void graph_destroy(Graph graph)  {
 
 void graph_set_hash_function(Graph graph, HashFunc hash_func)  {
     map_set_hash_function(graph->map,hash_func);
+    graph->hash_function=hash_func;
 }
