@@ -167,7 +167,8 @@ bool map_remove(Map map, Pointer key) {
 		uint pos= map->hash_function(key) % map->capacity;
 		MapNode prev_node=NULL,node=&(map->array[pos]);
 		while (node!=NULL)  {
-			if (node->key==key)  {
+			if (map->compare(node->key,key)==0)  {
+				map->size--;
 				if (prev_node!=NULL)  {
 					prev_node->next=node->next;
 				}
@@ -287,7 +288,7 @@ MapNode map_find_node(Map map, Pointer key) {
 	MapNode node=&(map->array[pos]);
 	if (node->state==1)  {
 		while (node!=NULL)  {
-			if (node->key==key)  {
+			if (map->compare(node->key,key)==0)  {
 				return node;
 			}
 			node=node->next;

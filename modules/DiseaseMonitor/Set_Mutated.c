@@ -417,7 +417,12 @@ static SetNode node_find_equal(SetNode node, CompareFunc compare, Pointer value)
 
 List set_next(Set set, SetNode node,Pointer Limit_Value,SetNode *prev) {
 	if (node==NULL)  {
-        if (set->compare((*prev)->value,Limit_Value)==0)  {
+        if (*prev!=NULL)  {
+            if (set->compare((*prev)->value,Limit_Value)==0)  {
+                return NULL;
+            }
+        }
+        else  {
             return NULL;
         }
         return (*prev)->id_list;
@@ -430,15 +435,15 @@ List set_next(Set set, SetNode node,Pointer Limit_Value,SetNode *prev) {
         *prev=node;
         set_next(set,node->right,Limit_Value,prev);
     }
-    
+    return NULL;
 }
 
 Pointer set_node_value(Set set, SetNode node) {
-	return node->value;
+	return node->id_list;
 }
 
 SetNode set_find_node(Set set, Pointer value) {
-	//return node_find_equal(set->root, set->compare, value);
+	return node_find_equal(set->root, set->compare, value);
 }
 
 

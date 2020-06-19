@@ -87,5 +87,4 @@ Pointer set_node_value(Set set, SetNode node);
 SetNode set_find_node(Set set, Pointer value);
 
 SetNode set_root(Set set);
-
 void get_count_greater_equal(Set set,SetNode node,Pointer Value,int* count);

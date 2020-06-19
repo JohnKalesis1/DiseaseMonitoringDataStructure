@@ -11,7 +11,7 @@ UsingHashTable_ADTMap_test_OBJS	= ADTMap_test.o $(MODULES)/UsingHashTable/ADTMap
 
 # DiseaseMonitor
 #
-# DiseaseMonitor_test_OBJS = DiseaseMonitor_test.o $(MODULES)/DiseaseMonitor.o ...
+DiseaseMonitor_test_OBJS = DiseaseMonitor_test.o $(MODULES)/DiseaseMonitor/DiseaseMonitor.o $(MODULES)/DiseaseMonitor/Set_Mutated.o $(MODULES)/UsingHashTable/ADTMap.o $(MODULES)/ADTVector.o $(MODULES)/ADTList.o
 
 # Ο βασικός κορμός του Makefile
 include ../common.mk

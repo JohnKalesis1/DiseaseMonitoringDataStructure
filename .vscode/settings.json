@@ -4,7 +4,7 @@
 		"dir": "tests",
 
 		// Όνομα του εκτελέσιμου προγράμματος
-		"program": "UsingAdjacencyLists_ADTGraph_test",
+		"program": "DiseaseMonitor_test",
 
 		// Ορίσματα του προγράμματος.
 		// - Για ανακατεύθυνση εισόδου βάζουμε ορίσματα: "<", "input-file"
