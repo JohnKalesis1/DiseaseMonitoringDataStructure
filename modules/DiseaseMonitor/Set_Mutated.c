@@ -9,6 +9,7 @@
 #include "ADTList.h"
 #include "ADTSet.h"
 #include "DiseaseMonitor.h"
+#include <string.h>
 
 
 // Υλοποιούμε τον ADT Set μέσω AVL, οπότε το struct set είναι ένα AVL Δέντρο.
@@ -68,9 +69,13 @@ static int node_balance(SetNode node) {
 static SetNode node_rotate_left(SetNode node) {
 	SetNode right_node = node->right;
 	SetNode left_subtree = right_node->left;
-
-    node->right_count=left_subtree->right_count+left_subtree->left_count+1;
-    node->right->right_count=node->right_count+node->left_count+1;
+    /*if (left_subtree!=NULL)  {
+        node->right_count=left_subtree->right_count+left_subtree->left_count+1;
+    }
+    else  {
+        node->right_count=0;
+    }
+    node->right->right_count=node->right_count+node->left_count+1;*/
 	right_node->left = node;
 	node->right = left_subtree;
 
@@ -86,8 +91,13 @@ static SetNode node_rotate_right(SetNode node) {
 	SetNode left_node = node->left;
 	SetNode left_right = left_node->right;
 
-    node->left_count=left_right->right_count+left_right->left_count+1;
-    node->left->left_count=node->right_count+node->left_count+1;
+    /*if (left_right!=NULL)  {
+        node->left_count=left_right->right_count+left_right->left_count+1;
+    }
+    else  {
+        node->left_count=0;
+    }
+    node->left->left_count=node->right_count+node->left_count+1;*/
 	left_node->right = node;
 	node->left = left_right;
 
@@ -262,6 +272,7 @@ static SetNode node_remove(SetNode node, CompareFunc compare, Pointer value, boo
 		    if (node->left == NULL) {
 		    	// Δεν υπάρχει αριστερό υποδέντρο, οπότε διαγράφεται απλά ο κόμβος και νέα ρίζα μπαίνει το δεξί παιδί
 		    	SetNode right = node->right;	// αποθήκευση πριν το free!
+                list_remove_next(node->id_list,LIST_BOF);
                 list_destroy(node->id_list);
 		    	free(node);
 		    	return right;
@@ -269,6 +280,7 @@ static SetNode node_remove(SetNode node, CompareFunc compare, Pointer value, boo
 		    } else if (node->right == NULL) {
 		    	// Δεν υπάρχει δεξί υποδέντρο, οπότε διαγράφεται απλά ο κόμβος και νέα ρίζα μπαίνει το αριστερό παιδί
 		    	SetNode left = node->left;		// αποθήκευση πριν το free!
+                list_remove_next(node->id_list,LIST_BOF);
                 list_destroy(node->id_list);
 		    	free(node);
 		    	return left;
@@ -283,6 +295,7 @@ static SetNode node_remove(SetNode node, CompareFunc compare, Pointer value, boo
 		    	// Σύνδεση του min_right στη θέση του node
 		    	min_right->left = node->left;
 		    	min_right->right = node->right;
+                list_remove_next(node->id_list,LIST_BOF);
                 list_destroy(node->id_list);
 		    	free(node);
 
@@ -291,11 +304,17 @@ static SetNode node_remove(SetNode node, CompareFunc compare, Pointer value, boo
         }
         else  {
             ListNode lnode=list_first(node->id_list);
+            if (((Record)list_node_value(node->id_list,lnode))->id==((Record)value)->id)  {
+                *removed = true;
+		        *old_value = list_node_value(node->id_list,lnode);
+				list_remove_next(node->id_list,LIST_BOF);
+                return node;
+            }
             while (list_next(node->id_list,lnode)!=LIST_EOF)  {
                 if (((Record)list_node_value(node->id_list,list_next(node->id_list,lnode)))->id==((Record)value)->id)  {
-                    list_remove_next(node->id_list,lnode);
                     *removed = true;
 		            *old_value = list_node_value(node->id_list,list_next(node->id_list,lnode));
+					list_remove_next(node->id_list,lnode);
                     return node;
                 }
                 lnode=list_next(node->id_list,lnode);
@@ -397,53 +416,55 @@ void set_destroy(Set set) {
 SetNode set_first(Set set) {
 	return node_find_min(set->root);
 }
-static SetNode node_find_equal(SetNode node, CompareFunc compare, Pointer value) {
-	// κενό υποδέντρο, δεν υπάρχει η τιμή
-	if (node == NULL)
-		return NULL;
-	
-	// Το πού βρίσκεται ο κόμβος που ψάχνουμε εξαρτάται από τη διάταξη της τιμής
-	// value σε σχέση με την τιμή του τρέχοντος κόμβο (node->value)
-	//
-	int compare_res = compare(value, node->value);			// αποθήκευση για να μην καλέσουμε την compare 2 φορές
-	if (compare_res == 0)									// value ισοδύναμη της node->value, βρήκαμε τον κόμβο
-		return node;
-	else if (compare_res < 0)								// value < node->value, ο κόμβος που ψάχνουμε είναι στο αριστερό υποδέντρο
-		return node_find_equal(node->left, compare, value);
-	else													// value > node->value, ο κόμβος που ψάχνουμε είνια στο δεξιό υποδέντρο
-		return node_find_equal(node->right, compare, value);
-}
 
 
 List set_next(Set set, SetNode node,Pointer Limit_Value,SetNode *prev) {
 	if (node==NULL)  {
         if (*prev!=NULL)  {
             if (set->compare((*prev)->value,Limit_Value)==0)  {
-                return NULL;
+                List list=list_create(NULL);
+            	return list;
             }
         }
         else  {
-            return NULL;
+            List list=list_create(NULL);
+            return list;
         }
         return (*prev)->id_list;
     }
     if (set->compare(node->value,Limit_Value)>0)  {
         *prev=node;
-        set_next(set,node->left,Limit_Value,prev);
+        return set_next(set,node->left,Limit_Value,prev);
     }
-    else  {
-        *prev=node;
-        set_next(set,node->right,Limit_Value,prev);
-    }
-    return NULL;
+	else  {
+		return set_next(set,node->right,Limit_Value,prev);
+	}
 }
 
 Pointer set_node_value(Set set, SetNode node) {
 	return node->id_list;
 }
 
-SetNode set_find_node(Set set, Pointer value) {
-	return node_find_equal(set->root, set->compare, value);
+List set_find_greater_equal(Set set, SetNode node,Pointer Limit_Date,SetNode *prev) {
+	if (node==NULL)  {
+        if (*prev!=NULL)  {
+            return (*prev)->id_list;
+        }
+        else  {
+			List list=list_create(NULL);
+            return list;
+        }
+    }
+    if (strcmp(((Record)node->value)->date,Limit_Date)>0)  {
+        *prev=node;
+        return set_find_greater_equal(set,node->left,Limit_Date,prev);
+    }
+	else if (strcmp(((Record)node->value)->date,Limit_Date)==0)  {
+		return node->id_list;
+	}
+	else  {
+		return set_find_greater_equal(set,node->right,Limit_Date,prev);
+	}
 }
 
 

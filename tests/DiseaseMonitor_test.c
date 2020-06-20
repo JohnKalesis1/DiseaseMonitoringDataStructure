@@ -224,12 +224,12 @@ void test_top_diseases(void) {
 
 // Λίστα με όλα τα tests προς εκτέλεση
 TEST_LIST = {
-	{ "dm_init", test_init },
+	/*{ "dm_init", test_init },
 	{ "dm_insert_record", test_insert },
 	{ "dm_remove_record", test_remove },
-	{ "dm_get_records", test_get_records },
+	{ "dm_get_records", test_get_records },*/
 	{ "dm_count_records", test_count_records },
-	{ "dm_top_diseases", test_top_diseases },
+	//{ "dm_top_diseases", test_top_diseases }, 
 
 	{ NULL, NULL } // τερματίζουμε τη λίστα με NULL
 };

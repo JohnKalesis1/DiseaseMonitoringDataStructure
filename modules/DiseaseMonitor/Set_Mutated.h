@@ -84,7 +84,7 @@ Pointer set_node_value(Set set, SetNode node);
 // Βρίσκει το μοναδικό στοιχείο στο set που να είναι ίσο με value.
 // Επιστρέφει τον κόμβο του στοιχείου, ή SET_EOF αν δεν βρεθεί.
 
-SetNode set_find_node(Set set, Pointer value);
+List set_find_greater_equal(Set set, SetNode node,Pointer Limit_Date,SetNode *prev);
 
 SetNode set_root(Set set);
 void get_count_greater_equal(Set set,SetNode node,Pointer Value,int* count);
