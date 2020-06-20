@@ -69,13 +69,9 @@ static int node_balance(SetNode node) {
 static SetNode node_rotate_left(SetNode node) {
 	SetNode right_node = node->right;
 	SetNode left_subtree = right_node->left;
-    /*if (left_subtree!=NULL)  {
-        node->right_count=left_subtree->right_count+left_subtree->left_count+1;
-    }
-    else  {
-        node->right_count=0;
-    }
-    node->right->right_count=node->right_count+node->left_count+1;*/
+    
+    node->right_count=right_node->left_count;
+	right_node->left_count=node->left_count+list_size(node->id_list);
 	right_node->left = node;
 	node->right = left_subtree;
 
@@ -91,13 +87,8 @@ static SetNode node_rotate_right(SetNode node) {
 	SetNode left_node = node->left;
 	SetNode left_right = left_node->right;
 
-    /*if (left_right!=NULL)  {
-        node->left_count=left_right->right_count+left_right->left_count+1;
-    }
-    else  {
-        node->left_count=0;
-    }
-    node->left->left_count=node->right_count+node->left_count+1;*/
+    node->left_count=left_node->right_count;
+	left_node->right_count=node->right_count+list_size(node->id_list);
 	left_node->right = node;
 	node->left = left_right;
 
@@ -505,11 +496,32 @@ bool node_is_avl(SetNode node, CompareFunc compare) {
 bool set_is_proper(Set node) {
 	return node_is_avl(node->root, node->compare);
 }
+List set_equal_value(Set set,SetNode node,Pointer Value)  {
+	if (node==NULL)  {
+		return NULL;
+	}
+	if (strcmp(((Record)node->value)->date,Value)==0)  {
+		return node->id_list;
+	}
+	else if (strcmp(((Record)node->value)->date,Value)>0)  {
+		return set_equal_value(set,node->left,Value);
+	}
+	else  {
+		return set_equal_value(set,node->right,Value);
+	}  
+
+}
 void get_count_greater_equal(Set set,SetNode node,Pointer value,int* count)  {
-    if (set->compare(node->value,value)==0)  {
-        return ;
+    if (node==NULL)  {
+		return;
+	}
+	if (strcmp(((Record)node->value)->date,value)==0)  {
+        if (node->left!=NULL)  {
+			*count=*count-node->left_count;
+		}
+		return ;
     }
-    else if (set->compare(node->value,value)>0)  {
+    else if (strcmp(((Record)node->value)->date,value)<0)  {
         *count=*count-node->left_count-list_size(node->id_list);
         get_count_greater_equal(set,node->right,value,count);
     }

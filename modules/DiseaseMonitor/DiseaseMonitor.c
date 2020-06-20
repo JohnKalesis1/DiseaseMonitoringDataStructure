@@ -160,51 +160,53 @@ List dm_get_records(String disease, String country, Date date_from, Date date_to
                 set=map_node_value(DataBase->country_dates,mnode);
                 bool stop=0;
                 SetNode prev=NULL;
-                if (date_from!=NULL)  {
-                    list=set_find_greater_equal(set,set_root(set),date_from,&prev);
-                }
-                else  {
-                    list=set_node_value(set,set_first(set));
-                }
-                ListNode temp_node=list_first(list);
-                if (date_to!=NULL)  {
-                    if (strcmp(((Record)list_node_value(list,temp_node))->date,date_to)>0)  {
-                        stop=1;
+                if (set_size(set)!=0)  {
+                    if (date_from!=NULL)  {
+                        list=set_find_greater_equal(set,set_root(set),date_from,&prev);
                     }
-                }
-                if (stop==0)  {
-                    while (temp_node!=LIST_EOF)  {
-                        list_insert_next(record_list,LIST_BOF,list_node_value(list,temp_node));
-                        temp_node=list_next(list,temp_node);
+                    else  {
+                        list=set_node_value(set,set_first(set));
                     }
-                    while (true)  {
-                        if (stop==1)  {
-                            break;
+                    ListNode temp_node=list_first(list);
+                    if (date_to!=NULL)  {
+                        if (strcmp(((Record)list_node_value(list,temp_node))->date,date_to)>0)  {
+                            stop=1;
                         }
-                        if (list_size(list)==0)  {
-                            break;
+                    }
+                    if (stop==0)  {
+                        while (temp_node!=LIST_EOF)  {
+                            list_insert_next(record_list,LIST_BOF,list_node_value(list,temp_node));
+                            temp_node=list_next(list,temp_node);
                         }
-                        Pointer Value=list_node_value(list,list_first(list));
-                        prev=NULL;
-                        list=set_next(set,set_root(set),Value,&prev);
-                        if (list_size(list)==0)  {
-                            break;
-                        }
-                        else  {
-                            temp_node=list_first(list);   
-                            while (temp_node!=LIST_EOF)  {
-                                if (date_to!=NULL)  {
-                                    if (strcmp(((Record)list_node_value(list,temp_node))->date,date_to)>0)  {
-                                        stop=1;
-                                        break;
+                        while (true)  {
+                            if (stop==1)  {
+                                break;
+                            }
+                            if (list_size(list)==0)  {
+                                break;
+                            }
+                            Pointer Value=list_node_value(list,list_first(list));
+                            prev=NULL;
+                            list=set_next(set,set_root(set),Value,&prev);
+                            if (list_size(list)==0)  {
+                                break;
+                            }
+                            else  {
+                                temp_node=list_first(list);   
+                                while (temp_node!=LIST_EOF)  {
+                                    if (date_to!=NULL)  {
+                                        if (strcmp(((Record)list_node_value(list,temp_node))->date,date_to)>0)  {
+                                            stop=1;
+                                            break;
+                                        }
                                     }
+                                    list_insert_next(record_list,LIST_BOF,list_node_value(list,temp_node));
+                                    temp_node=list_next(list,temp_node);
                                 }
-                                list_insert_next(record_list,LIST_BOF,list_node_value(list,temp_node));
-                                temp_node=list_next(list,temp_node);
                             }
                         }
-                    }
-                }   
+                    }   
+                }
                 mnode=map_next(DataBase->country_dates,mnode);
             }
             return record_list;
@@ -278,7 +280,31 @@ int dm_count_records(String disease, String country, Date date_from, Date date_t
     int count2;
     if (disease==NULL)  {
         if (country==NULL)  {
-            
+            int count_all=0;
+            mnode=map_first(DataBase->country_dates);
+            while (mnode!=MAP_EOF)  {
+                set=map_node_value(DataBase->country_dates,mnode);
+                count1=set_size(set);
+                count2=0;
+                if (set_size(set)!=0)  {
+                    if (date_from!=NULL)  {
+                        get_count_greater_equal(set,set_root(set),date_from,&count1);
+                    }
+                    if (date_to!=NULL)  {
+                        count2=set_size(set);
+                        get_count_greater_equal(set,set_root(set),date_to,&count2);
+                        if (set_equal_value(set,set_root(set),date_to)!=NULL)  {
+                            count2=count2-list_size((List)set_equal_value(set,set_root(set),date_to));
+                        }
+                    }
+                    else  {
+                        count2=0;
+                    }
+                }
+                count_all=count_all+(count1-count2);
+                mnode=map_next(DataBase->country_dates,mnode);
+            }
+            return count_all;       
         }
         else  {
             mnode=map_find_node(DataBase->country_dates,country);
@@ -295,15 +321,21 @@ int dm_count_records(String disease, String country, Date date_from, Date date_t
         set=map_node_value(map_node_value(DataBase->disease_country_related,mnode),inner_node);
     }
     count1=set_size(set);
-    if (date_from!=NULL)  {
-        get_count_greater_equal(set,set_root(set),date_from,&count1);
-    }
-    if (date_to!=NULL)  {
-        count2=set_size(set);
-        get_count_greater_equal(set,set_root(set),date_to,&count2);
-    }
-    else  {
-        count2=0;
+    count2=0;
+    if (set_size(set)!=0)  {
+        if (date_from!=NULL)  {
+            get_count_greater_equal(set,set_root(set),date_from,&count1);
+        }
+        if (date_to!=NULL)  {
+            count2=set_size(set);
+            get_count_greater_equal(set,set_root(set),date_to,&count2);
+            if (set_equal_value(set,set_root(set),date_to)!=NULL)  {
+                count2=count2-list_size((List)set_equal_value(set,set_root(set),date_to));
+            }
+        }
+        else  {
+            count2=0;
+        }
     }
     return count1-count2;
 }
