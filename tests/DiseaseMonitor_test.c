@@ -192,7 +192,7 @@ void run_and_test_top_diseases(int k, String country) {
 
 	for (ListNode node = list_first(result); node != LIST_EOF; node = list_next(result, node)) {
 		String disease = list_node_value(result, node);
-		int count = dm_count_records(country, disease, NULL, NULL);
+		int count = dm_count_records(disease, country, NULL, NULL);
 		TEST_ASSERT(count <= last_count);
 		last_count = count;
 	}
@@ -214,7 +214,7 @@ void test_top_diseases(void) {
 	for (int k = 1; k <= 3; k++)
 		run_and_test_top_diseases(k, "Targaryen");
 
-	for (int k = 1; k <= 6; k++)
+	for (int k = 6; k <= 6; k++)
 		run_and_test_top_diseases(k, NULL);
 
 	dm_destroy();
@@ -224,11 +224,11 @@ void test_top_diseases(void) {
 
 // Λίστα με όλα τα tests προς εκτέλεση
 TEST_LIST = {
-	/*{ "dm_init", test_init },
+	{ "dm_init", test_init },
 	{ "dm_insert_record", test_insert },
 	{ "dm_remove_record", test_remove },
 	{ "dm_get_records", test_get_records },
-	{ "dm_count_records", test_count_records },*/
+	{ "dm_count_records", test_count_records },
 	{ "dm_top_diseases", test_top_diseases }, 
 
 	{ NULL, NULL } // τερματίζουμε τη λίστα με NULL

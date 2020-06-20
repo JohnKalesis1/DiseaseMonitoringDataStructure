@@ -3,6 +3,8 @@
 #include <string.h>
 #include "ADTMap.h"
 #include "Set_Mutated.h"
+#include "ADTPriorityQueue.h"
+#include <stdio.h>
 struct dataset  {
     Map id_record_relate;
     Map disease_dates;
@@ -339,7 +341,81 @@ int dm_count_records(String disease, String country, Date date_from, Date date_t
     }
     return count1-count2;
 }
-
+struct disease_count  {
+    int count;
+    String disease;
+};
+typedef struct disease_count * Disease_count;
+int compare_counts(Pointer a,Pointer b)  {
+    return ((Disease_count)a)->count-((Disease_count)b)->count;
+}
+Disease_count create_count(String disease,int count)  {
+    Disease_count Entity=malloc(sizeof(*Entity));
+    Entity->disease=malloc((sizeof(disease)/sizeof(char)+1)*sizeof(char));
+    strcpy(Entity->disease,disease);
+    Entity->count=count;
+    return Entity;
+}
 List dm_top_diseases(int k, String country)  {
-    return NULL;
+    List list=list_create(NULL);
+    PriorityQueue pqueue=pqueue_create(compare_counts,free,NULL);
+    if (country==NULL)  {
+        MapNode mnode=map_first(DataBase->disease_dates);
+        while (mnode!=MAP_EOF)  {
+            pqueue_insert(pqueue,create_count(map_node_key(DataBase->disease_dates,mnode),dm_count_records(map_node_key(DataBase->disease_dates,mnode),NULL,NULL,NULL)));
+            mnode=map_next(DataBase->disease_dates,mnode);
+
+        }
+        int entries=0;
+        list_insert_next(list,LIST_BOF,((Disease_count)pqueue_max(pqueue))->disease);
+        pqueue_remove_max(pqueue);
+        entries++;
+        if (entries==k)  {
+            return list;
+        }
+        ListNode lnode=list_first(list);
+        while (pqueue_size(pqueue)!=0)  {
+            list_insert_next(list,lnode,((Disease_count)pqueue_max(pqueue))->disease);
+            pqueue_remove_max(pqueue);
+            lnode=list_next(list,lnode);
+            entries++;
+            if (entries==k)  {
+                break;
+            }
+        }
+        return list;
+    }
+    else  {
+        MapNode outer_node=map_find_node(DataBase->disease_country_related,country);
+        if (outer_node!=MAP_EOF)  {
+            MapNode inner_node=map_first(map_node_value(DataBase->disease_country_related,outer_node));
+            while (inner_node!=MAP_EOF)  {
+                pqueue_insert(pqueue,create_count(map_node_key(map_node_value(DataBase->disease_country_related,outer_node),inner_node),dm_count_records(map_node_key(map_node_value(DataBase->disease_country_related,outer_node),inner_node),country,NULL,NULL)));
+                inner_node=map_next(map_node_value(DataBase->disease_country_related,outer_node),inner_node);
+            }
+            int entries=0;
+            String disease=((Disease_count)pqueue_max(pqueue))->disease;
+            list_insert_next(list,LIST_BOF,disease);
+            pqueue_remove_max(pqueue);
+            entries++;
+            if (entries==k)  {
+                return list;
+            }
+            ListNode lnode=list_first(list);
+            while (pqueue_size(pqueue)!=0)  {
+                list_insert_next(list,lnode,((Disease_count)pqueue_max(pqueue))->disease);
+                pqueue_remove_max(pqueue);
+                lnode=list_next(list,lnode);
+                entries++;
+                if (entries==k)  {
+                    break;
+                }
+            }
+            return list;
+        }
+        else  {
+            return list;
+        }
+    }
+    return list;
 }
