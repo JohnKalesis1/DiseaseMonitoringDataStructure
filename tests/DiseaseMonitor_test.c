@@ -32,8 +32,7 @@ struct record records[] = {
 	{ .id = 17, .name = "Theon",    .country = "Greyjoy",   .disease = "Pale Mare", .date = "0300-01-01" },
 	{ .id = 18, .name = "Oberyn",   .country = "Martell",   .disease = "Eye pain",  .date = "0301-01-01" },
 	{ .id = 19, .name = "Robert",   .country = "Baratheon", .disease = "Grayscale", .date = "0298-01-01" },
-	{ .id = 20, .name = "Jorah",    .country = "Mormont",   .disease = "Grayscale", .date = "0299-01-01" },
-
+	{ .id = 20, .name = "Jorah",    .country = "Mormont",   .disease = "Grayscale", .date = "0299-01-01" }, 
 };
 int record_no = sizeof(records)/sizeof(struct record);
 
@@ -83,11 +82,14 @@ void test_insert(void) {
 		// Εισαγωγή της εγγραφής i
 		TEST_ASSERT(!dm_insert_record(&records[i]));	
 		TEST_ASSERT( dm_insert_record(&records[i]));		// replace, returns true
+		
 
 		// Ελεγχος ότι το monitor περιέχει όλες τις εγγραφές μέχρι και το i
 		List list = dm_get_records(NULL, NULL, NULL, NULL);
 		check_record_list(list, ids, i+1);
+
 	}
+
 
 	dm_destroy();
 }
@@ -111,6 +113,7 @@ void test_remove(void) {
 		List list = dm_get_records(NULL, NULL, NULL, NULL);
 		check_record_list(list, &ids[i+1], record_no-i-1);
 	}
+	
 
 	dm_destroy();
 }
@@ -171,6 +174,13 @@ void test_count_records(void) {
 	for(int i = 0; i < record_no; i++)
 		dm_insert_record(&records[i]);	
 
+	TEST_ASSERT(dm_count_records(NULL,"Targaryen",NULL,NULL)==4);
+	TEST_ASSERT(dm_count_records(NULL,"Mormont",NULL,NULL)==1);
+	TEST_ASSERT(dm_count_records(NULL,"Stark",NULL,NULL)==4);
+	TEST_ASSERT(dm_count_records(NULL,"Baratheon",NULL,NULL)==2);
+	TEST_ASSERT(dm_count_records(NULL,"Lannister",NULL,NULL)==4);
+	TEST_ASSERT(dm_count_records(NULL,"Greyjoy",NULL,NULL)==2);
+	TEST_ASSERT(dm_count_records(NULL,"Baelish",NULL,NULL)==1);
 	// try various search criteria
 	count_and_test("Pale Mare", NULL,        NULL,         NULL        );
 	count_and_test(NULL,        "Targaryen", NULL,         NULL        );
@@ -229,7 +239,7 @@ TEST_LIST = {
 	{ "dm_remove_record", test_remove },
 	{ "dm_get_records", test_get_records },
 	{ "dm_count_records", test_count_records },
-	{ "dm_top_diseases", test_top_diseases }, 
+	{ "dm_top_diseases", test_top_diseases },
 
 	{ NULL, NULL } // τερματίζουμε τη λίστα με NULL
 };

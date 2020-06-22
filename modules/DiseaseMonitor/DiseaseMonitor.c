@@ -21,13 +21,12 @@ int str_compare(Pointer a,Pointer b)  {
 int date_compare(Pointer a,Pointer b)  {
     return strcmp(((Record)a)->date,((Record)b)->date);
 }
-void destroy_function(Pointer map)  {
-    map=(Map)map;
-    MapNode mnode=map_first(map);
-    while (mnode!=MAP_EOF)  {
-        set_destroy(map_node_value(map,mnode));
-        mnode=map_next(map,mnode);
-    }
+void s_destroy(Pointer set)  {
+    set_destroy((Set)set);
+    return ;
+}
+void m_destroy(Pointer map)  {
+    map_destroy((Map)map);
     return ;
 }
 void dm_init()  {
@@ -37,11 +36,11 @@ void dm_init()  {
     DataBase=malloc(sizeof(*DataBase));
     DataBase->id_record_relate=map_create(compare_ints,NULL,NULL);
     map_set_hash_function(DataBase->id_record_relate,hash_int);
-    DataBase->country_dates=map_create(str_compare,NULL,NULL);
+    DataBase->country_dates=map_create(str_compare,NULL,s_destroy);
     map_set_hash_function(DataBase->country_dates,hash_string);
-    DataBase->disease_dates=map_create(str_compare,NULL,NULL);
+    DataBase->disease_dates=map_create(str_compare,NULL,s_destroy);
     map_set_hash_function(DataBase->disease_dates,hash_string);
-    DataBase->disease_country_related=map_create(str_compare,NULL,NULL);
+    DataBase->disease_country_related=map_create(str_compare,NULL,m_destroy);
     map_set_hash_function(DataBase->disease_country_related,hash_string);
 }
 
@@ -66,7 +65,7 @@ bool dm_insert_record(Record record)  {
     MapNode map_node;
     Set tree;
     if ((map_node=map_find_node(DataBase->disease_country_related,record->country))==MAP_EOF)  {
-        Map disease_related_country_dates=map_create(str_compare,NULL,destroy_function);
+        Map disease_related_country_dates=map_create(str_compare,NULL,s_destroy);
         map_set_hash_function(disease_related_country_dates,hash_string);
         no_subset_available=1;
         map_insert(DataBase->disease_country_related,record->country,disease_related_country_dates);
@@ -92,17 +91,18 @@ bool dm_insert_record(Record record)  {
         tree=set_create(date_compare,NULL);
         set_insert(tree,record);
         map_insert(map_node_value(DataBase->disease_country_related,map_node),record->disease,tree);
-        if (no_set2_available==1)  {
-            tree=set_create(date_compare,NULL);
-            set_insert(tree,record);
-            map_insert(DataBase->disease_dates,record->disease,tree);
-        }
-        if (no_set1_available==1)  {
-            tree=set_create(date_compare,NULL);
-            set_insert(tree,record);
-            map_insert(DataBase->country_dates,record->country,tree);
-        }
     }
+    if (no_set1_available==1)  {
+        tree=set_create(date_compare,NULL);
+        set_insert(tree,record);
+        map_insert(DataBase->country_dates,record->country,tree);
+    }
+    if (no_set2_available==1)  {
+        tree=set_create(date_compare,NULL);
+        set_insert(tree,record);
+        map_insert(DataBase->disease_dates,record->disease,tree);
+    }
+    
     if (no_set1_available==0)  {
         set_insert(map_node_value(DataBase->country_dates,map_find_node(DataBase->country_dates,record->country)),record);
     }
@@ -158,39 +158,45 @@ List dm_get_records(String disease, String country, Date date_from, Date date_to
         if (country==NULL)  {
             mnode=map_first(DataBase->country_dates);
             while (mnode!=MAP_EOF)  {
-                List list=list_create(NULL);
+                List list;
                 set=map_node_value(DataBase->country_dates,mnode);
                 bool stop=0;
                 SetNode prev=NULL;
                 if (set_size(set)!=0)  {
                     if (date_from!=NULL)  {
                         list=set_find_greater_equal(set,set_root(set),date_from,&prev);
+                        if (list==NULL)  {
+                            //list_destroy(list);
+                            stop=1;
+                        }
                     }
                     else  {
                         list=set_node_value(set,set_first(set));
                     }
-                    ListNode temp_node=list_first(list);
-                    if (date_to!=NULL)  {
-                        if (strcmp(((Record)list_node_value(list,temp_node))->date,date_to)>0)  {
-                            stop=1;
+                    ListNode temp_node;
+                    if (stop!=1)  {
+                        temp_node=list_first(list);
+                        if (date_to!=NULL)  {
+                            if (strcmp(((Record)list_node_value(list,temp_node))->date,date_to)>0)  {
+                                stop=1;
+                            }
                         }
                     }
-                    if (stop==0)  {
+                    if (stop!=1)  {
                         while (temp_node!=LIST_EOF)  {
                             list_insert_next(record_list,LIST_BOF,list_node_value(list,temp_node));
                             temp_node=list_next(list,temp_node);
                         }
                         while (true)  {
                             if (stop==1)  {
-                                break;
-                            }
-                            if (list_size(list)==0)  {
+                                //list_destroy(list);
                                 break;
                             }
                             Pointer Value=list_node_value(list,list_first(list));
+                            //list_destroy(list);
                             prev=NULL;
                             list=set_next(set,set_root(set),Value,&prev);
-                            if (list_size(list)==0)  {
+                            if (list==NULL)  {
                                 break;
                             }
                             else  {
@@ -207,7 +213,9 @@ List dm_get_records(String disease, String country, Date date_from, Date date_to
                                 }
                             }
                         }
-                    }   
+                        //list_destroy(list);
+
+                    }
                 }
                 mnode=map_next(DataBase->country_dates,mnode);
             }
@@ -227,47 +235,54 @@ List dm_get_records(String disease, String country, Date date_from, Date date_to
         MapNode inner_node=map_find_node(map_node_value(DataBase->disease_country_related,mnode),disease);
         set=map_node_value(map_node_value(DataBase->disease_country_related,mnode),inner_node);
     }
-    List list=list_create(NULL);
+    List list;
     bool stop=0;
     SetNode prev=NULL;
-    if (date_from!=NULL)  {
-        list=set_find_greater_equal(set,set_root(set),date_from,&prev);
-    }
-    else  {
-        list=set_node_value(set,set_first(set));
-    }
-    ListNode temp_node=list_first(list);
-    if (date_to!=NULL)  {
-        if (strcmp(((Record)list_node_value(list,temp_node))->date,date_to)>0)  {
-            stop=1;
-        }
-    }
-    if (stop==0)  {
-        while (temp_node!=LIST_EOF)  {
-            list_insert_next(record_list,LIST_BOF,list_node_value(list,temp_node));
-            temp_node=list_next(list,temp_node);
-        }
-        while (true)  {
-            if (stop==1)  {
-                break;
+    if (set_size(set)!=0)  {
+        if (date_from!=NULL)  {
+            list=set_find_greater_equal(set,set_root(set),date_from,&prev);
+            if (list==NULL)  {
+                stop=1;
             }
-            Pointer Value=list_node_value(list,list_first(list));
-            prev=NULL;
-            list=set_next(set,set_root(set),Value,&prev);
-            if (list_size(list)==0)  {
-                break;
+        }
+        else  {
+            list=set_node_value(set,set_first(set));
+        }
+        ListNode temp_node=list_first(list);
+        if (stop!=1)  {
+            if (date_to!=NULL)  {
+                if (strcmp(((Record)list_node_value(list,temp_node))->date,date_to)>0)  {
+                    stop=1;
+                }
             }
-            else  {
-                temp_node=list_first(list);   
-                while (temp_node!=LIST_EOF)  {
-                    if (date_to!=NULL)  {
-                        if (strcmp(((Record)list_node_value(list,temp_node))->date,date_to)>0)  {
-                            stop=1;
-                            break;
+        }
+        if (stop!=1)  {
+            while (temp_node!=LIST_EOF)  {
+                list_insert_next(record_list,LIST_BOF,list_node_value(list,temp_node));
+                temp_node=list_next(list,temp_node);
+            }
+            while (true)  {
+                if (stop==1)  {
+                    break;
+                }
+                Pointer Value=list_node_value(list,list_first(list));
+                prev=NULL;
+                list=set_next(set,set_root(set),Value,&prev);
+                if (list==NULL)  {
+                    break;
+                }
+                else  {
+                    temp_node=list_first(list);   
+                    while (temp_node!=LIST_EOF)  {
+                        if (date_to!=NULL)  {
+                            if (strcmp(((Record)list_node_value(list,temp_node))->date,date_to)>0)  {
+                                stop=1;
+                                break;
+                            }
                         }
+                        list_insert_next(record_list,LIST_BOF,list_node_value(list,temp_node));
+                        temp_node=list_next(list,temp_node);
                     }
-                    list_insert_next(record_list,LIST_BOF,list_node_value(list,temp_node));
-                    temp_node=list_next(list,temp_node);
                 }
             }
         }
@@ -351,8 +366,7 @@ int compare_counts(Pointer a,Pointer b)  {
 }
 Disease_count create_count(String disease,int count)  {
     Disease_count Entity=malloc(sizeof(*Entity));
-    Entity->disease=malloc((sizeof(disease)/sizeof(char)+1)*sizeof(char));
-    strcpy(Entity->disease,disease);
+    Entity->disease=disease;
     Entity->count=count;
     return Entity;
 }
@@ -371,6 +385,7 @@ List dm_top_diseases(int k, String country)  {
         pqueue_remove_max(pqueue);
         entries++;
         if (entries==k)  {
+            pqueue_destroy(pqueue);
             return list;
         }
         ListNode lnode=list_first(list);
@@ -383,6 +398,7 @@ List dm_top_diseases(int k, String country)  {
                 break;
             }
         }
+        pqueue_destroy(pqueue);
         return list;
     }
     else  {
@@ -399,6 +415,7 @@ List dm_top_diseases(int k, String country)  {
             pqueue_remove_max(pqueue);
             entries++;
             if (entries==k)  {
+                pqueue_destroy(pqueue);
                 return list;
             }
             ListNode lnode=list_first(list);
@@ -411,11 +428,14 @@ List dm_top_diseases(int k, String country)  {
                     break;
                 }
             }
+            pqueue_destroy(pqueue);
             return list;
         }
         else  {
+            pqueue_destroy(pqueue);
             return list;
         }
     }
+    pqueue_destroy(pqueue);
     return list;
 }

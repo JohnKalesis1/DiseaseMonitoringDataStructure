@@ -193,13 +193,19 @@ void map_destroy(Map map) {
 	for (int i = 0; i < map->capacity; i++) {
 		MapNode node=&map->array[i];
 		if (node->state!=0) {  //διασχιζουμε καθε hash το οποιο εχει στοιχεια
+		bool not_first=false;
 			while (node!=NULL)  {
+				
 				if (map->destroy_key != NULL)  //και καλουμε τις destroy
 					map->destroy_key(node->key);
 				if (map->destroy_value != NULL)
 					map->destroy_value(node->value);
-			
-			node=node->next;
+			MapNode next=node->next;
+			if (not_first)  {
+				free(node);
+			}
+			not_first=true;
+			node=next;
 			}
 		}
 	}
