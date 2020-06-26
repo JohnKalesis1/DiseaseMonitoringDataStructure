@@ -65,8 +65,25 @@ void test_init(void) {
 	dm_init();
 
 	List list = dm_get_records(NULL, NULL, NULL, NULL);
+	List blist = dm_get_records(NULL, "test", NULL, NULL);  //ελεγχος οτι σε περιπτωση που τα κριτηρια δεν αντισοιχουν σε καποιο record τοτε επιστρεφεται κενη λιστα
+	List clist = dm_get_records("test", "test", NULL, NULL);
+	List dlist = dm_get_records("test", NULL, NULL, NULL);
+	TEST_ASSERT(list_size(dlist) == 0);
+	list_destroy(dlist);
+	TEST_ASSERT(list_size(clist) == 0);
+	list_destroy(clist);
 	TEST_ASSERT(list_size(list) == 0);
 	list_destroy(list);
+	TEST_ASSERT(list_size(blist) == 0);
+	list_destroy(blist);
+
+	List elist=dm_top_diseases(10,"test"); 
+	TEST_ASSERT(list_size(elist) == 0);
+	list_destroy(elist);
+
+	List flist=dm_top_diseases(0,NULL);
+	TEST_ASSERT(list_size(flist) == 0);
+	list_destroy(flist);
 
 	dm_destroy();
 }
@@ -174,7 +191,7 @@ void test_count_records(void) {
 	for(int i = 0; i < record_no; i++)
 		dm_insert_record(&records[i]);	
 
-	TEST_ASSERT(dm_count_records(NULL,"Targaryen",NULL,NULL)==4);
+	TEST_ASSERT(dm_count_records(NULL,"Targaryen",NULL,NULL)==4); //ελεγχος οτι υπαρχουν σωστα τα δεδομενα σε πληθος για καθε χωρα
 	TEST_ASSERT(dm_count_records(NULL,"Mormont",NULL,NULL)==1);
 	TEST_ASSERT(dm_count_records(NULL,"Stark",NULL,NULL)==4);
 	TEST_ASSERT(dm_count_records(NULL,"Baratheon",NULL,NULL)==2);
@@ -227,6 +244,10 @@ void test_top_diseases(void) {
 	for (int k = 6; k <= 6; k++)
 		run_and_test_top_diseases(k, NULL);
 
+
+	List list=dm_top_diseases(10,"Martell"); //ελεγχος οτι παρολο που ζητηθηκαν παραπανω ασθενειας απο οσες υπαρχουν για την χωρα
+	TEST_ASSERT(list_size(list)==1);   //παλι επιστρεφηκε μια λιστα που περιεχει μονο οσες ασθενειες εχουν τουλαχιστον ενα κρουσμα βαση του ορισματος country
+	list_destroy(list);
 	dm_destroy();
 }
 
