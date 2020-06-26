@@ -6,10 +6,10 @@
 #include "ADTPriorityQueue.h"
 #include <stdio.h>
 struct dataset  {
-    Map id_record_relate;  //αντιστοιχηση id =>record
-    Map disease_dates;     //αντιστοιχηση disease=>set με records της ασθενειας
-    Map country_dates;     //αντιστοιχηση country=>set με records της χωρας
-    Map disease_country_related; //αντιστοιχηση country=>map που αντιστοιχει disease=>set με records της ασθενειας σε αυτη τη χωρα
+    Map id_record_relate;  //αντιστοιχιση id =>record
+    Map disease_dates;     //αντιστοιχιση disease=>set με records της ασθενειας
+    Map country_dates;     //αντιστοιχιση country=>set με records της χωρας
+    Map disease_country_related; //αντιστοιχιση country=>map που αντιστοιχει disease=>set με records της ασθενειας σε αυτη τη χωρα
     Set All_records;       //set με ολα τα κρουσματα
 };
 static struct dataset* DataBase=NULL;
@@ -62,7 +62,7 @@ bool dm_insert_record(Record record)  {
         return_bool=1;
         dm_remove_record(record->id);  //το αφαιρουμε και επειτα το ξαναπροσθετουμε 
     }
-    bool no_subset_available=0; //αν υπαρχει σετ διαθεσιμο που αντιστοιχει στο συνδιασμο χωρας,ασθενειας
+    bool no_subset_available=0; //αν υπαρχει σετ διαθεσιμο που αντιστοιχει στο συνδυασμο χωρας,ασθενειας
     bool no_set1_available=0;   //αν υπαρχει σετ διαθεσιμο που να αντιστοιχει στην χωρα
     bool no_set2_available=0;   //αν υπαρχει σετ διαθεσιμο που να αντιστοιχει στην ασθενεια
     MapNode map_node;
@@ -92,16 +92,16 @@ bool dm_insert_record(Record record)  {
     map_node=map_find_node(DataBase->disease_country_related,record->country);
     if (no_subset_available==1)  {
         tree=set_create(date_compare,NULL);
-        set_insert(tree,record); //δημιουργια ενος σετ για συνδιασμο ασθενειας χωρας
+        set_insert(tree,record); //δημιουργια ενος σετ για συνδυασμο ασθενειας χωρας
         map_insert(map_node_value(DataBase->disease_country_related,map_node),record->disease,tree);
     }
     if (no_set1_available==1)  {
         tree=set_create(date_compare,NULL);
-        set_insert(tree,record); 
+        set_insert(tree,record); //δημιουργια ενος σετ για χωρα
         map_insert(DataBase->country_dates,record->country,tree);
     }
     if (no_set2_available==1)  {
-        tree=set_create(date_compare,NULL);
+        tree=set_create(date_compare,NULL);//δημιουργια ενος σετ για ασθενεια
         set_insert(tree,record);
         map_insert(DataBase->disease_dates,record->disease,tree);
     }
@@ -220,7 +220,7 @@ List dm_get_records(String disease, String country, Date date_from, Date date_to
                 }
                 else  {
                     temp_node=list_first(list);   
-                    while (temp_node!=LIST_EOF)  { //αλλιως αφου ελεγξουμε οτι δε ξεπερνανε το αμω φραγμα τα αντιγραφουμε στη δικια μας λιστα
+                    while (temp_node!=LIST_EOF)  { //αλλιως αφου ελεγξουμε οτι δε ξεπερνανε το ανω φραγμα τα αντιγραφουμε στη δικια μας λιστα
                         if (date_to!=NULL)  {
                             if (strcmp(((Record)list_node_value(list,temp_node))->date,date_to)>0)  {
                                 stop=1;
@@ -241,7 +241,7 @@ int dm_count_records(String disease, String country, Date date_from, Date date_t
     MapNode mnode;
     Set set;
     int count1;
-    int count2;  //πρψτα επιλεγουμε απο ποιο σετ θα μετρησουμε τα στοιχεια
+    int count2;  //πρωτα επιλεγουμε απο ποιο σετ θα μετρησουμε τα στοιχεια
     if (disease==NULL)  { 
         if (country==NULL)  {
             set=DataBase->All_records;       
@@ -292,7 +292,7 @@ Disease_count create_count(String disease,int count)  {
 }
 List dm_top_diseases(int k, String country)  {
     List list=list_create(NULL);
-    PriorityQueue pqueue=pqueue_create(compare_counts,free,NULL); //η πυρα προτεραιοτητας με την οποια θα κανουμε sort τα στοιχεια 
+    PriorityQueue pqueue=pqueue_create(compare_counts,free,NULL); //η ουρα προτεραιοτητας με την οποια θα κανουμε sort τα στοιχεια 
     if (country==NULL)  {
         MapNode mnode=map_first(DataBase->disease_dates);// διατρεχουμε τον map με τα σετ της καθε ασθενειας 
         while (mnode!=MAP_EOF)  { //και τοποθετουμε στην ουρα το αθροισμα των κρουσματων της μαζι με το ονομα της (μεσα σε μια δομη)
@@ -313,7 +313,7 @@ List dm_top_diseases(int k, String country)  {
             return list;
         }
         ListNode lnode=list_first(list);
-        while (pqueue_size(pqueue)!=0)  { //αν φτασουμε σε μηδενικο μεγεθος ουρας σημαινει οτι ο αριθμος ασθενειων που υπαρχουν στο συστημα εινια μικροτερος απο το ορισμα της συναρτησης
+        while (pqueue_size(pqueue)!=0)  { //αν φτασουμε σε μηδενικο μεγεθος ουρας σημαινει οτι ο αριθμος ασθενειων που υπαρχουν στο συστημα ειναι μικροτερος απο το ορισμα της συναρτησης
             list_insert_next(list,lnode,((Disease_count)pqueue_max(pqueue))->disease);// οπου και παλι απλα επιστρεφουμε την λιστα που δημιοργησαμε
             pqueue_remove_max(pqueue);
             lnode=list_next(list,lnode);
@@ -325,7 +325,7 @@ List dm_top_diseases(int k, String country)  {
         pqueue_destroy(pqueue);
         return list;
     }
-    else  { //να δωθει σε ποια χωρα θελουμε να ψαξουμε , ομοιως διατρεχουμε τον sub map της και δημιουργουμε την ουρα προτεραιοτητας
+    else  { //αν δωθει σε ποια χωρα θελουμε να ψαξουμε , ομοιως διατρεχουμε τον sub map της και δημιουργουμε την ουρα προτεραιοτητας
         MapNode outer_node=map_find_node(DataBase->disease_country_related,country);
         if (outer_node!=MAP_EOF)  { //αν υπαρχει αυτη η χωρα για την οποια θελουμε να ψαξουμε τα κρουσματα της 
             MapNode inner_node=map_first(map_node_value(DataBase->disease_country_related,outer_node));
@@ -334,7 +334,7 @@ List dm_top_diseases(int k, String country)  {
                 inner_node=map_next(map_node_value(DataBase->disease_country_related,outer_node),inner_node);
             }
             int entries=0;
-            if (pqueue_size(pqueue)==0)  { ////περιπτωση να μην υπαρχει κανενα κρουσμα για αυτη τη χωρα
+            if (pqueue_size(pqueue)==0)  { //περιπτωση να μην υπαρχει κανενα κρουσμα για αυτη τη χωρα
                 pqueue_destroy(pqueue);
                 return list;
             }  
